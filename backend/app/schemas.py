@@ -7,4 +7,12 @@ class QueryRequest(BaseModel):
         max_length=2000,
         description="The user's financial research question.",
     )
-    
+
+class Source(BaseModel):
+    document: str
+    page: int
+
+class QueryResponse(BaseModel):
+    answer: str
+    sources: list[Source]
+

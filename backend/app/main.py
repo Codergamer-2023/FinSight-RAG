@@ -1,7 +1,7 @@
 import logging 
 from fastapi import FastAPI
 
-from backend.app.schemas import QueryRequest
+from backend.app.schemas import QueryRequest, QueryResponse
 
 
 logging.basicConfig(
@@ -18,11 +18,11 @@ async def health_check() -> dict[str, str]:
     logger.info("Health check requested")
     return {"status": "healthy"}
 
-@app.post("/api/v1/query")
-async def query(request: QueryRequest) -> dict[str, str]:
+@app.post("/api/v1/query", response_model=QueryResponse)
+async def query(request: QueryRequest) -> QueryResponse:
     logger.info("Query received")
 
     return {
-        "message": "Query accepted",
-        "question": request.question,
+        "answer": "Query accepted",
+        "sources": [],
     }
