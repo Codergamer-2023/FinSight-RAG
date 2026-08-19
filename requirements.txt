@@ -1,2 +1,4 @@
 fastapi==0.141.1
 uvicorn[standard]==0.52.1
+pymupdf==1.28.2
+langchain-core==1.5.6

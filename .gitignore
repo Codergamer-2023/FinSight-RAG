@@ -16,3 +16,6 @@ __pycache__/
 # Application logs
 *.log
 logs/
+
+# Raw source documents
+data/raw/
