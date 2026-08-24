@@ -19,3 +19,6 @@ logs/
 
 # Raw source documents
 data/raw/
+
+# Local vector database
+data/qdrant/
