@@ -12,7 +12,7 @@ class Retriever:
         self.model = SentenceTransformer(MODEL_NAME)
         self.client = QdrantClient(path = QDRANT_PATH)
 
-    def retrieve(self, question: str, top_k: int = 5) -> list[RetrievedChunk]:
+    def retrieve(self, question: str, top_k: int = 5, score_threshold: float = 0.55) -> list[RetrievedChunk]:
         query_embedding = self.model.encode(
             question,
             convert_to_numpy=True,
@@ -32,4 +32,6 @@ class Retriever:
                 score=result.score,
             )
             for result in results.points
+            if result.score >= score_threshold
+
         ]
