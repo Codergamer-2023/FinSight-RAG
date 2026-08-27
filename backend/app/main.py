@@ -1,8 +1,9 @@
 import logging 
 from fastapi import FastAPI
 
-from backend.app.schemas import QueryRequest, QueryResponse
+from backend.app.schemas import QueryRequest, QueryResponse, Source
 
+from backend.retrieval.retriever import Retriever
 
 logging.basicConfig(
     level = logging.INFO,
@@ -13,6 +14,9 @@ app = FastAPI(
     title = "FinSight API",
     version = "0.1.0",
 )
+
+retriever = Retriever()
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     logger.info("Health check requested")
@@ -22,7 +26,20 @@ async def health_check() -> dict[str, str]:
 async def query(request: QueryRequest) -> QueryResponse:
     logger.info("Query received")
 
-    return {
-        "answer": "Query accepted",
-        "sources": [],
-    }
+    chunks = retriever.retrieve(
+        request.question,
+        top_k=5,
+    )
+
+    sources = [
+        Source(
+            document=chunk.document,
+            page=chunk.page,
+        )
+        for chunk in chunks
+    ]
+
+    return QueryResponse(
+        answer="Retrieval successful",
+        sources=sources,
+    )
