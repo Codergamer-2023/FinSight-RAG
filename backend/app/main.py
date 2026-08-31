@@ -5,6 +5,10 @@ from backend.app.schemas import QueryRequest, QueryResponse, Source
 
 from backend.retrieval.retriever import Retriever
 
+from backend.retrieval.reranker import Reranker
+
+from backend.llm.generator import Generator
+
 logging.basicConfig(
     level = logging.INFO,
     format = "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -16,6 +20,8 @@ app = FastAPI(
 )
 
 retriever = Retriever()
+generator = Generator()
+reranker = Reranker()
 
 @app.get("/health")
 async def health_check() -> dict[str, str]:
@@ -28,7 +34,18 @@ async def query(request: QueryRequest) -> QueryResponse:
 
     chunks = retriever.retrieve(
         request.question,
+        top_k=10,
+    )
+
+    chunks = reranker.rerank(
+        request.question,
+        chunks,
         top_k=5,
+    )
+
+    answer = generator.generate(
+        request.question,
+        chunks,
     )
 
     sources = [
@@ -40,6 +57,6 @@ async def query(request: QueryRequest) -> QueryResponse:
     ]
 
     return QueryResponse(
-        answer="Retrieval successful",
+        answer=answer,
         sources=sources,
     )
