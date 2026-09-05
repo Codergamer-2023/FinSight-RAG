@@ -33,4 +33,23 @@ class Reranker:
             key=lambda chunk: chunk.rerank_score,
             reverse=True,
         )
-        return ranked_chunks[:top_k]
+
+        unique_chunks = []
+        seen = set()
+        for chunk in ranked_chunks:
+            key = (
+                chunk.document,
+                chunk.page,
+                chunk.text,
+            )
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            unique_chunks.append(chunk)
+
+            if len(unique_chunks) == top_k:
+                break
+
+        return unique_chunks

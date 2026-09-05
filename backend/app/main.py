@@ -23,6 +23,9 @@ retriever = Retriever()
 generator = Generator()
 reranker = Reranker()
 
+RETRIEVAL_TOP_K = 10
+RERANK_TOP_K = 5
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     logger.info("Health check requested")
@@ -34,13 +37,13 @@ async def query(request: QueryRequest) -> QueryResponse:
 
     chunks = retriever.retrieve(
         request.question,
-        top_k=10,
+        top_k=RETRIEVAL_TOP_K,
     )
 
     chunks = reranker.rerank(
         request.question,
         chunks,
-        top_k=5,
+        top_k=RERANK_TOP_K,
     )
 
     answer = generator.generate(
@@ -48,13 +51,23 @@ async def query(request: QueryRequest) -> QueryResponse:
         chunks,
     )
 
-    sources = [
-        Source(
-            document=chunk.document,
-            page=chunk.page,
+    sources = []
+    seen_sources = set()
+
+    for chunk in chunks:
+        source_key = (chunk.document, chunk.page)
+
+        if source_key in seen_sources:
+            continue
+
+        seen_sources.add(source_key)
+
+        sources.append(
+            Source(
+                document=chunk.document,
+                page=chunk.page,
+            )
         )
-        for chunk in chunks
-    ]
 
     return QueryResponse(
         answer=answer,
