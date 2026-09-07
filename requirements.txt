@@ -7,3 +7,5 @@ sentence-transformers==6.0.0
 qdrant-client==1.19.0
 groq==1.7.0
 python-dotenv==1.2.2
+streamlit==1.63.0
+requests==2.34.2
