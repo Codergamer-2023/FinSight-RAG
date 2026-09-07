@@ -22,3 +22,6 @@ data/raw/
 
 # Local vector database
 data/qdrant/
+
+# User-uploaded documents
+data/uploads/

@@ -3,6 +3,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 from langchain_core.documents import Document
 
+import uuid
+
 COLLECTION_NAME = "finsight_documents"
 VECTOR_SIZE = 384
 QDRANT_PATH = "data/qdrant"
@@ -29,6 +31,55 @@ def create_vector_store(
         points.append(
             PointStruct(
                 id=index,
+                vector=embedding,
+                payload={
+                    "text": chunk.page_content,
+                    "document": chunk.metadata["document"],
+                    "page": chunk.metadata["page"],
+                },
+            )
+        )
+
+    client.upsert(
+        collection_name=COLLECTION_NAME,
+        points=points,
+    )
+
+    return client
+
+def add_to_vector_store(
+    chunks: list[Document],
+    embeddings: list[list[float]],
+    client: QdrantClient,
+) -> QdrantClient:
+
+    if not client.collection_exists(COLLECTION_NAME):
+        client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(
+                size=VECTOR_SIZE,
+                distance=Distance.COSINE,
+            ),
+        )
+
+    points = []
+
+    for chunk, embedding in zip(chunks, embeddings):
+
+        point_id = str(
+            uuid.uuid5(
+                uuid.NAMESPACE_URL,
+                (
+                    f"{chunk.metadata['document']}:"
+                    f"{chunk.metadata['page']}:"
+                    f"{chunk.page_content}"
+                ),
+            )
+        )
+
+        points.append(
+            PointStruct(
+                id=point_id,
                 vector=embedding,
                 payload={
                     "text": chunk.page_content,

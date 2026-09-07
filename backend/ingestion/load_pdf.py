@@ -7,8 +7,10 @@ PDF_FILE = Path(
     "data/raw/nvidia/nvidia_2026_10k.pdf"
 )
 
-def load_pdf() -> list[Document]:
-    pdf = pymupdf.open(PDF_FILE)
+def load_pdf(
+        pdf_file: Path = PDF_FILE,
+) -> list[Document]:
+    pdf = pymupdf.open(pdf_file)
     documents =[]
 
     for page_number in range(len(pdf)):
@@ -19,7 +21,7 @@ def load_pdf() -> list[Document]:
             Document(
                 page_content = text,
                 metadata = {
-                    "document": PDF_FILE.name,
+                    "document": pdf_file.name,
                     "page": page_number + 1,
                 },
             )
