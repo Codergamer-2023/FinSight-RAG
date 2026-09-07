@@ -7,7 +7,10 @@ from backend.retrieval.schemas import RetrievedChunk
 
 load_dotenv()
 
-MODEL_NAME = "openai/gpt-oss-20b"
+MODEL_NAME = os.getenv(
+    "GROQ_MODEL",
+    "openai/gpt-oss-20b",
+)
 
 
 class Generator:
