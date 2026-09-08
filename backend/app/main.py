@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException, File, UploadFile
 from backend.app.schemas import QueryRequest, QueryResponse, Source
 
 from backend.retrieval.retriever import Retriever
+from backend.retrieval.keyword_retriever import KeywordRetriever
+from backend.retrieval.hybrid_retriever import HybridRetriever
 
 from backend.retrieval.reranker import Reranker
 
@@ -16,6 +18,7 @@ from backend.ingestion.load_pdf import load_pdf
 from backend.ingestion.chunk_documents import chunk_documents
 from backend.ingestion.embed_documents import embed_documents
 from backend.ingestion.vector_store import add_to_vector_store
+from backend.retrieval.schemas import RetrievedChunk
 
 logging.basicConfig(
     level = logging.INFO,
@@ -28,6 +31,13 @@ app = FastAPI(
 )
 
 retriever = Retriever()
+keyword_retriever = KeywordRetriever(
+    retriever.client
+)
+hybrid_retriever = HybridRetriever(
+    retriever,
+    keyword_retriever,
+)
 generator = Generator()
 reranker = Reranker()
 
@@ -86,7 +96,19 @@ async def upload_document(
             embeddings,
             retriever.client,
         )
+        keyword_chunks = [
+            RetrievedChunk(
+                document=chunk.metadata["document"],
+                page=chunk.metadata["page"],
+                text=chunk.page_content,
+                score=0.0,
+            )
+            for chunk in chunks
+        ]
 
+        keyword_retriever.add_chunks(
+            keyword_chunks
+        )
         collection = client.get_collection(
             "finsight_documents"
         )
@@ -123,7 +145,7 @@ async def upload_document(
 async def query(request: QueryRequest) -> QueryResponse:
     logger.info("Query received")
     try:
-        chunks = retriever.retrieve(
+        chunks = hybrid_retriever.retrieve(
             request.question,
             top_k=RETRIEVAL_TOP_K,
         )
