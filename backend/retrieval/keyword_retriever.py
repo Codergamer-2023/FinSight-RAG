@@ -10,26 +10,25 @@ COLLECTION_NAME = "finsight_documents"
 
 
 class KeywordRetriever:
-    def __init__(
-        self,
-        client: QdrantClient,
-    ):
+    def __init__(self, client: QdrantClient):
         self.client = client
         self.chunks: list[RetrievedChunk] = []
         self.bm25: BM25Okapi | None = None
-
         self._load_from_qdrant()
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:
-        return re.findall(
-            r"\b\w+\b",
-            text.lower(),
-        )
+        return re.findall(r"\b\w+\b", text.lower())
 
     def _load_from_qdrant(self) -> None:
-        chunks = []
+        if not self.client.collection_exists(
+            COLLECTION_NAME
+        ):
+            self.chunks = []
+            self.bm25 = None
+            return
 
+        chunks = []
         offset = None
 
         while True:
@@ -114,7 +113,9 @@ class KeywordRetriever:
         if not self.chunks or self.bm25 is None:
             return []
 
-        tokenized_query = self._tokenize(question)
+        tokenized_query = self._tokenize(
+            question
+        )
 
         scores = self.bm25.get_scores(
             tokenized_query
@@ -135,9 +136,7 @@ class KeywordRetriever:
                 continue
 
             chunk = self.chunks[index].model_copy(
-                update={
-                    "score": score,
-                }
+                update={"score": score}
             )
 
             results.append(chunk)

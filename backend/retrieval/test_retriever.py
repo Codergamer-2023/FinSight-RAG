@@ -1,19 +1,24 @@
-from backend.retrieval.retriever import Retriever
+def test_retriever_returns_results(retriever):
+    results = retriever.retrieve(
+        "What was NVIDIA's total revenue in fiscal 2026?",
+        top_k=10,
+        score_threshold=0.0,
+    )
 
-retriever = Retriever()
-question = "What drove NVIDIA's revenue growth in fiscal 2026?"
+    assert results
+    assert len(results) <= 10
 
-results = retriever.retrieve(
-    question,
-    top_k=5,
-)
+    assert all(
+        result.document
+        for result in results
+    )
 
-print(f"Question: {question}")
-print(f"Results: {len(results)}")
+    assert all(
+        result.page > 0
+        for result in results
+    )
 
-for i, result in enumerate(results, start=1):
-    print(f"\n--- Result {i} ---")
-    print(f"Score: {result.score:.4f}")
-    print(f"Document: {result.document}")
-    print(f"Page: {result.page}")
-    print(f"Text: {result.text[:700]}")
+    assert all(
+        result.text
+        for result in results
+    )

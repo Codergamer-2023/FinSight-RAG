@@ -11,6 +11,7 @@ class QueryRequest(BaseModel):
 class Source(BaseModel):
     document: str
     page: int
+    rerank_score: float | None = None
 
 class QueryResponse(BaseModel):
     answer: str

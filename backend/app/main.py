@@ -17,7 +17,7 @@ from pathlib import Path
 from backend.ingestion.load_pdf import load_pdf
 from backend.ingestion.chunk_documents import chunk_documents
 from backend.ingestion.embed_documents import embed_documents
-from backend.ingestion.vector_store import add_to_vector_store
+from backend.ingestion.vector_store import add_to_vector_store, COLLECTION_NAME
 from backend.retrieval.schemas import RetrievedChunk
 
 logging.basicConfig(
@@ -110,7 +110,7 @@ async def upload_document(
             keyword_chunks
         )
         collection = client.get_collection(
-            "finsight_documents"
+            collection_name=COLLECTION_NAME
         )
 
         logger.info(
@@ -193,6 +193,7 @@ async def query(request: QueryRequest) -> QueryResponse:
                 Source(
                     document=chunk.document,
                     page=chunk.page,
+                    rerank_score=chunk.rerank_score,
                 )
             )
         return QueryResponse(

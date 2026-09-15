@@ -1,36 +1,37 @@
-from backend.retrieval.retriever import Retriever
 from backend.retrieval.reranker import Reranker
 
 
-retriever = Retriever()
-reranker = Reranker()
+def test_reranker_returns_ranked_results(retriever):
+    chunks = retriever.retrieve(
+        "What was NVIDIA's total revenue in fiscal 2026?",
+        top_k=10,
+        score_threshold=0.0,
+    )
 
-question = "What was NVIDIA's total revenue in fiscal 2026?"
+    assert chunks
 
-chunks = retriever.retrieve(
-    question,
-    top_k=10,
-)
+    reranker = Reranker()
 
-reranked_chunks = reranker.rerank(
-    question,
-    chunks,
-    top_k=5,
-)
-reranked_chunks = reranker.rerank(
-    question,
-    chunks,
-    top_k=5,
-)
+    results = reranker.rerank(
+        "What was NVIDIA's total revenue in fiscal 2026?",
+        chunks,
+        top_k=5,
+    )
 
-print(f"Question: {question}")
-print(f"\nRetrieved candidates: {len(chunks)}")
-print(f"Reranked results: {len(reranked_chunks)}")
+    assert results
+    assert len(results) <= 5
 
-for i, chunk in enumerate(reranked_chunks, start=1):
-    print(f"\n--- Reranked Result {i} ---")
-    print(f"Document: {chunk.document}")
-    print(f"Page: {chunk.page}")
-    print(f"Qdrant Score: {chunk.score:.4f}")
-    print(f"Rerank Score: {chunk.rerank_score:.4f}")
-    print(f"Text: {chunk.text[:700]}")
+    assert all(
+        chunk.rerank_score is not None
+        for chunk in results
+    )
+
+    scores = [
+        chunk.rerank_score
+        for chunk in results
+    ]
+
+    assert scores == sorted(
+        scores,
+        reverse=True,
+    )

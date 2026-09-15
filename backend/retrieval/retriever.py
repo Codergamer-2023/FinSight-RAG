@@ -3,16 +3,31 @@ from qdrant_client import QdrantClient
 
 from backend.retrieval.schemas import RetrievedChunk
 
+
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 COLLECTION_NAME = "finsight_documents"
 QDRANT_PATH = "data/qdrant"
 
+
 class Retriever:
     def __init__(self):
         self.model = SentenceTransformer(MODEL_NAME)
-        self.client = QdrantClient(path = QDRANT_PATH)
+        self.client = QdrantClient(
+            path=QDRANT_PATH
+        )
 
-    def retrieve(self, question: str, top_k: int = 5, score_threshold: float = 0.55) -> list[RetrievedChunk]:
+    def retrieve(
+        self,
+        question: str,
+        top_k: int = 10,
+        score_threshold: float = 0.55,
+    ) -> list[RetrievedChunk]:
+
+        if not self.client.collection_exists(
+            COLLECTION_NAME
+        ):
+            return []
+
         query_embedding = self.model.encode(
             question,
             convert_to_numpy=True,
@@ -33,5 +48,4 @@ class Retriever:
             )
             for result in results.points
             if result.score >= score_threshold
-
         ]
