@@ -1,17 +1,32 @@
+import os
+
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 
 from backend.retrieval.schemas import RetrievedChunk
 
+load_dotenv()
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-COLLECTION_NAME = "finsight_documents"
-QDRANT_PATH = "data/qdrant"
+
+COLLECTION_NAME = os.getenv(
+    "COLLECTION_NAME",
+    "finsight_documents",
+)
+
+QDRANT_PATH = os.getenv(
+    "QDRANT_PATH",
+    "data/qdrant",
+)
 
 
 class Retriever:
     def __init__(self):
-        self.model = SentenceTransformer(MODEL_NAME)
+        self.model = SentenceTransformer(
+            MODEL_NAME
+        )
+
         self.client = QdrantClient(
             path=QDRANT_PATH
         )

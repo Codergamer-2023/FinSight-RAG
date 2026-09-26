@@ -1,21 +1,40 @@
+import os
+import uuid
 from pathlib import Path
+
+from dotenv import load_dotenv
+from langchain_core.documents import Document
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-from langchain_core.documents import Document
 
-import uuid
+load_dotenv()
 
-COLLECTION_NAME = "finsight_documents"
+COLLECTION_NAME = os.getenv(
+    "COLLECTION_NAME",
+    "finsight_documents",
+)
+
 VECTOR_SIZE = 384
-QDRANT_PATH = "data/qdrant"
+
+QDRANT_PATH = os.getenv(
+    "QDRANT_PATH",
+    "data/qdrant",
+)
+
 
 def create_vector_store(
     chunks: list[Document],
     embeddings: list[list[float]],
 ) -> QdrantClient:
-    Path(QDRANT_PATH).mkdir(parents=True, exist_ok=True)
 
-    client = QdrantClient(path=QDRANT_PATH)
+    Path(QDRANT_PATH).mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    client = QdrantClient(
+        path=QDRANT_PATH,
+    )
 
     client.create_collection(
         collection_name=COLLECTION_NAME,
@@ -27,7 +46,9 @@ def create_vector_store(
 
     points = []
 
-    for index, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+    for index, (chunk, embedding) in enumerate(
+        zip(chunks, embeddings)
+    ):
         points.append(
             PointStruct(
                 id=index,
@@ -47,13 +68,16 @@ def create_vector_store(
 
     return client
 
+
 def add_to_vector_store(
     chunks: list[Document],
     embeddings: list[list[float]],
     client: QdrantClient,
 ) -> QdrantClient:
 
-    if not client.collection_exists(COLLECTION_NAME):
+    if not client.collection_exists(
+        COLLECTION_NAME
+    ):
         client.create_collection(
             collection_name=COLLECTION_NAME,
             vectors_config=VectorParams(
@@ -64,8 +88,10 @@ def add_to_vector_store(
 
     points = []
 
-    for chunk, embedding in zip(chunks, embeddings):
-
+    for chunk, embedding in zip(
+        chunks,
+        embeddings,
+    ):
         point_id = str(
             uuid.uuid5(
                 uuid.NAMESPACE_URL,
@@ -96,6 +122,7 @@ def add_to_vector_store(
 
     return client
 
+
 if __name__ == "__main__":
     from backend.ingestion.load_pdf import load_pdf
     from backend.ingestion.chunk_documents import chunk_documents
@@ -105,9 +132,16 @@ if __name__ == "__main__":
     chunks = chunk_documents(documents)
     embeddings = embed_documents(chunks)
 
-    client = create_vector_store(chunks, embeddings)
+    client = create_vector_store(
+        chunks,
+        embeddings,
+    )
 
-    collection = client.get_collection(COLLECTION_NAME)
+    collection = client.get_collection(
+        COLLECTION_NAME
+    )
 
     print(f"Chunks: {len(chunks)}")
-    print(f"Vectors: {collection.points_count}")
+    print(
+        f"Vectors: {collection.points_count}"
+    )

@@ -1,12 +1,18 @@
+import os
 import re
-
+ 
+from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from rank_bm25 import BM25Okapi
 
 from backend.retrieval.schemas import RetrievedChunk
 
+load_dotenv()
 
-COLLECTION_NAME = "finsight_documents"
+COLLECTION_NAME = os.getenv(
+    "COLLECTION_NAME",
+    "finsight_documents",
+)
 
 
 class KeywordRetriever:
@@ -18,7 +24,10 @@ class KeywordRetriever:
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:
-        return re.findall(r"\b\w+\b", text.lower())
+        return re.findall(
+            r"\b\w+\b",
+            text.lower(),
+        )
 
     def _load_from_qdrant(self) -> None:
         if not self.client.collection_exists(
