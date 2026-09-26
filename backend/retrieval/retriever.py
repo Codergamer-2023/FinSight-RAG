@@ -20,6 +20,26 @@ QDRANT_PATH = os.getenv(
     "data/qdrant",
 )
 
+QDRANT_URL = os.getenv(
+    "QDRANT_URL",
+)
+
+QDRANT_API_KEY = os.getenv(
+    "QDRANT_API_KEY",
+)
+
+
+def create_qdrant_client() -> QdrantClient:
+    if QDRANT_URL:
+        return QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY,
+        )
+
+    return QdrantClient(
+        path=QDRANT_PATH,
+    )
+
 
 class Retriever:
     def __init__(self):
@@ -27,9 +47,7 @@ class Retriever:
             MODEL_NAME
         )
 
-        self.client = QdrantClient(
-            path=QDRANT_PATH
-        )
+        self.client = create_qdrant_client()
 
     def retrieve(
         self,

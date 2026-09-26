@@ -21,28 +21,49 @@ QDRANT_PATH = os.getenv(
     "data/qdrant",
 )
 
+QDRANT_URL = os.getenv(
+    "QDRANT_URL",
+)
 
-def create_vector_store(
-    chunks: list[Document],
-    embeddings: list[list[float]],
-) -> QdrantClient:
+QDRANT_API_KEY = os.getenv(
+    "QDRANT_API_KEY",
+)
+
+
+def create_qdrant_client() -> QdrantClient:
+    if QDRANT_URL:
+        return QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY,
+        )
 
     Path(QDRANT_PATH).mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    client = QdrantClient(
+    return QdrantClient(
         path=QDRANT_PATH,
     )
 
-    client.create_collection(
-        collection_name=COLLECTION_NAME,
-        vectors_config=VectorParams(
-            size=VECTOR_SIZE,
-            distance=Distance.COSINE,
-        ),
-    )
+
+def create_vector_store(
+    chunks: list[Document],
+    embeddings: list[list[float]],
+) -> QdrantClient:
+
+    client = create_qdrant_client()
+
+    if not client.collection_exists(
+        COLLECTION_NAME
+    ):
+        client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(
+                size=VECTOR_SIZE,
+                distance=Distance.COSINE,
+            ),
+        )
 
     points = []
 
