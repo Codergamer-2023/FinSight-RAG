@@ -1,56 +1,46 @@
-from sentence_transformers import CrossEncoder
-from backend.retrieval.schemas import RetrievedChunk
+from backend.llm.cohere_client import CohereClient
 
-MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+from backend.retrieval.schemas import RetrievedChunk
 
 
 class Reranker:
     def __init__(self):
-        self.model = None
-
-    def _get_model(self) -> CrossEncoder:
-        if self.model is None:
-            self.model = CrossEncoder(MODEL_NAME)
-
-        return self.model
+        self.cohere = CohereClient()
 
     def rerank(
-        self, question: str, chunks: list[RetrievedChunk], top_k: int = 5
+        self,
+        question: str,
+        chunks: list[RetrievedChunk],
+        top_k: int = 5,
     ) -> list[RetrievedChunk]:
 
         if not chunks:
             return []
 
-        pairs = [[question, chunk.text] for chunk in chunks]
-
-        model = self._get_model()
-
-        scores = model.predict(pairs)
-        ranked_chunks = [
-            chunk.model_copy(update={"rerank_score": float(score)})
-            for chunk, score in zip(chunks, scores)
+        documents = [
+            chunk.text
+            for chunk in chunks
         ]
-        ranked_chunks.sort(
-            key=lambda chunk: chunk.rerank_score,
-            reverse=True,
+
+        results = self.cohere.rerank(
+            query=question,
+            documents=documents,
+            top_n=min(top_k, len(documents)),
         )
 
-        unique_chunks = []
-        seen = set()
-        for chunk in ranked_chunks:
-            key = (
-                chunk.document,
-                chunk.page,
-                chunk.text,
+        ranked_chunks = []
+
+        for result in results:
+            chunk = chunks[result.index]
+
+            ranked_chunks.append(
+                chunk.model_copy(
+                    update={
+                        "rerank_score": float(
+                            result.relevance_score
+                        )
+                    }
+                )
             )
 
-            if key in seen:
-                continue
-
-            seen.add(key)
-            unique_chunks.append(chunk)
-
-            if len(unique_chunks) == top_k:
-                break
-
-        return unique_chunks
+        return ranked_chunks

@@ -14,7 +14,12 @@ COLLECTION_NAME = os.getenv(
     "finsight_documents",
 )
 
-VECTOR_SIZE = 384
+VECTOR_SIZE = int(
+    os.getenv(
+        "COHERE_EMBED_DIMENSION",
+        "1024",
+    )
+)
 
 QDRANT_PATH = os.getenv(
     "QDRANT_PATH",

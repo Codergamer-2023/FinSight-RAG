@@ -1,14 +1,14 @@
 import os
 
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 
+from backend.llm.cohere_client import CohereClient
 from backend.retrieval.schemas import RetrievedChunk
+
 
 load_dotenv()
 
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 COLLECTION_NAME = os.getenv(
     "COLLECTION_NAME",
@@ -43,14 +43,8 @@ def create_qdrant_client() -> QdrantClient:
 
 class Retriever:
     def __init__(self):
-        self.model = None
         self.client = create_qdrant_client()
-
-    def _get_model(self) -> SentenceTransformer:
-        if self.model is None:
-            self.model = SentenceTransformer(MODEL_NAME)
-
-        return self.model
+        self.cohere = CohereClient()
 
     def retrieve(
         self,
@@ -59,14 +53,14 @@ class Retriever:
         score_threshold: float = 0.55,
     ) -> list[RetrievedChunk]:
 
-        if not self.client.collection_exists(COLLECTION_NAME):
+        if not self.client.collection_exists(
+            COLLECTION_NAME
+        ):
             return []
 
-        model = self._get_model()
-        query_embedding = model.encode(
-            question,
-            convert_to_numpy=True,
-        ).tolist()
+        query_embedding = self.cohere.embed_query(
+            question
+        )
 
         results = self.client.query_points(
             collection_name=COLLECTION_NAME,
