@@ -3,30 +3,31 @@ from backend.retrieval.schemas import RetrievedChunk
 
 MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
+
 class Reranker:
     def __init__(self):
-        self.model = CrossEncoder(MODEL_NAME)
+        self.model = None
+
+    def _get_model(self) -> CrossEncoder:
+        if self.model is None:
+            self.model = CrossEncoder(MODEL_NAME)
+
+        return self.model
 
     def rerank(
-            self,
-            question : str,
-            chunks : list[RetrievedChunk],
-            top_k : int = 5
+        self, question: str, chunks: list[RetrievedChunk], top_k: int = 5
     ) -> list[RetrievedChunk]:
 
         if not chunks:
             return []
 
-        pairs = [
-            [question, chunk.text]
-            for chunk in chunks
-        ]
+        pairs = [[question, chunk.text] for chunk in chunks]
 
-        scores = self.model.predict(pairs)
+        model = self._get_model()
+
+        scores = model.predict(pairs)
         ranked_chunks = [
-            chunk.model_copy(
-                update={"rerank_score": float(score)}
-            )
+            chunk.model_copy(update={"rerank_score": float(score)})
             for chunk, score in zip(chunks, scores)
         ]
         ranked_chunks.sort(

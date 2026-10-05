@@ -43,11 +43,14 @@ def create_qdrant_client() -> QdrantClient:
 
 class Retriever:
     def __init__(self):
-        self.model = SentenceTransformer(
-            MODEL_NAME
-        )
-
+        self.model = None
         self.client = create_qdrant_client()
+
+    def _get_model(self) -> SentenceTransformer:
+        if self.model is None:
+            self.model = SentenceTransformer(MODEL_NAME)
+
+        return self.model
 
     def retrieve(
         self,
@@ -56,12 +59,11 @@ class Retriever:
         score_threshold: float = 0.55,
     ) -> list[RetrievedChunk]:
 
-        if not self.client.collection_exists(
-            COLLECTION_NAME
-        ):
+        if not self.client.collection_exists(COLLECTION_NAME):
             return []
 
-        query_embedding = self.model.encode(
+        model = self._get_model()
+        query_embedding = model.encode(
             question,
             convert_to_numpy=True,
         ).tolist()
