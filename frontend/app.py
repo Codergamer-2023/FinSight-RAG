@@ -25,8 +25,7 @@ st.caption("AI-powered financial research assistant")
 
 st.markdown(
     """
-    Search financial documents using semantic retrieval,
-    cross-encoder reranking, and grounded LLM generation.
+    AI-powered financial document research using hybrid semantic and keyword retrieval, Cohere reranking, and grounded LLM generation.
     """
 )
 
@@ -181,9 +180,7 @@ if ask:
                 )
 
 
-            except requests.exceptions.RequestException:
-
+            except requests.exceptions.RequestException as error:
                 st.error(
-                    "Unable to connect to the FinSight API. "
-                    "Make sure the FastAPI server is running."
+                    f"Unable to upload the document: {error}"
                 )
